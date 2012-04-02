@@ -74,13 +74,11 @@ void bot_connect(bot *b) {
 }
 
 void bot_register(bot *b) {
-    char register_msg[] =
+    char msg[] =
         "NICK enfin\r\n"
         "USER enfin 0 * :An IRC bot in C\r\n";
 
-    int len = strlen(register_msg);
-    int len2 = send(b->sock, register_msg, len, 0);
-    assert(len == len2);
+    bot_send_raw(b, msg);
 }
 
 void bot_postregister(bot *b) {
@@ -88,9 +86,7 @@ void bot_postregister(bot *b) {
         "JOIN #bots\r\n"
         "PRIVMSG #bots :It works!\r\n";
 
-    int len = strlen(msg);
-    int len2 = send(b->sock, msg, len, 0);
-    assert(len == len2);
+    bot_send_raw(b, msg);
 }
 
 void bot_run(bot *b) {
@@ -106,5 +102,22 @@ void bot_run(bot *b) {
         if(NULL != strstr(buf, " 001 ")) {
             bot_postregister(b);
         }
+    }
+}
+
+void bot_send_raw(bot *b, const char *msg) {
+    int total = strlen(msg);
+    int sent = 0;
+    int left = total;
+
+    while(sent < total) {
+        int n = send(b->sock, msg + sent, left, 0);
+        if(n == -1) {
+            perror("error sending data");
+            exit(EXIT_FAILURE);
+        }
+
+        sent += n;
+        left -= n;
     }
 }

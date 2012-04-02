@@ -24,4 +24,6 @@ void bot_register(bot *b);
 void bot_postregister(bot *b);
 void bot_run(bot *b);
 
+void bot_send_raw(bot *b, const char *msg);
+
 #endif /* __BOT_H__ */
