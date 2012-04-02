@@ -116,8 +116,8 @@ void bot_send_raw(bot *b, const char *msg) {
 void bot_sendf(bot *b, const char *format, ...) {
     va_list args;
     va_start(args, format);
-
     char *msg = talloc_vasprintf(NULL, format, args);
+    va_end(args);
 
     bot_send_raw(b, msg);
     bot_send_raw(b, "\r\n");
