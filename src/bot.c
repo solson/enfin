@@ -9,11 +9,6 @@
 #include <netdb.h>
 #include "bot.h"
 
-static void error(const char *msg) {
-    perror(msg);
-    exit(EXIT_FAILURE);
-}
-
 bot *bot_new(const char *nick, const char *username, const char *realname,
         const char *hostname, const char *port) {
     bot *b = malloc(sizeof(bot));
@@ -53,18 +48,26 @@ void bot_connect(bot *b) {
         exit(EXIT_FAILURE);
     }
 
-    for(struct addrinfo *p = res; p != NULL; p = p->ai_next) {
-        // TODO: get the first working one or fail
+    struct addrinfo *p;
+    for(p = res; p != NULL; p = p->ai_next) {
+        b->sock = socket(res->ai_family, res->ai_socktype, res->ai_protocol);
+        if(b->sock == -1) {
+            perror("error opening socket");
+            continue;
+        }
+
+        status = connect(b->sock, res->ai_addr, res->ai_addrlen);
+        if(status == -1) {
+            perror("error connecting");
+            continue;
+        }
+
+        break;
     }
 
-    b->sock = socket(res->ai_family, res->ai_socktype, res->ai_protocol);
-    if(b->sock == -1) {
-        error("error opening socket");
-    }
-
-    status = connect(b->sock, res->ai_addr, res->ai_addrlen);
-    if(status == -1) {
-        error("error connecting");
+    if (p == NULL) {
+        fprintf(stderr, "error: failed to connect\n");
+        exit(EXIT_FAILURE);
     }
 
     freeaddrinfo(res);
@@ -83,7 +86,7 @@ void bot_register(bot *b) {
 void bot_postregister(bot *b) {
     char msg[] =
         "JOIN #bots\r\n"
-        "PRIVMSG #bots :first attempt!\r\n";
+        "PRIVMSG #bots :It works!\r\n";
 
     int len = strlen(msg);
     int len2 = send(b->sock, msg, len, 0);
@@ -95,8 +98,9 @@ void bot_run(bot *b) {
     bot_register(b);
 
     while(true) {
-        char buf[512];
-        recv(b->sock, buf, 512, 0);
+        char buf[513];
+        int bytesread = recv(b->sock, buf, 513, 0);
+        buf[bytesread] = '\0';
         printf("%s", buf);
 
         if(NULL != strstr(buf, " 001 ")) {
