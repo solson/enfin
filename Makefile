@@ -2,8 +2,9 @@
 
 CC := clang
 OUTPUT := enfin
-CFLAGS := -std=gnu99 -D_GNU_SOURCE -MMD -Iinclude/ -Wall -Wextra
-LDFLAGS :=
+CFLAGS := -std=gnu99 -MMD -Iinclude/ -Wall -Wextra \
+	$(shell pkg-config --cflags talloc)
+LDFLAGS := $(shell pkg-config --libs talloc)
 
 # Find sources
 SOURCES := $(shell find src/ -name '*.c')

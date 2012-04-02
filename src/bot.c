@@ -8,29 +8,25 @@
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netdb.h>
+#include <talloc.h>
 #include "bot.h"
 
 bot *bot_new(const char *nick, const char *username, const char *realname,
         const char *hostname, const char *port) {
-    bot *b = malloc(sizeof(bot));
+    bot *b = talloc(NULL, bot);
 
-    b->nick = strdup(nick);
-    b->username = strdup(username);
-    b->realname = strdup(realname);
-    b->hostname = strdup(hostname);
-    b->port = strdup(port);
+    b->nick = talloc_strdup(b, nick);
+    b->username = talloc_strdup(b, username);
+    b->realname = talloc_strdup(b, realname);
+    b->hostname = talloc_strdup(b, hostname);
+    b->port = talloc_strdup(b, port);
 
     return b;
 }
 
 void bot_free(bot *b) {
     close(b->sock);
-    free(b->nick);
-    free(b->username);
-    free(b->realname);
-    free(b->hostname);
-    free(b->port);
-    free(b);
+    talloc_free(b);
 }
 
 void bot_connect(bot *b) {
@@ -121,9 +117,10 @@ void bot_sendf(bot *b, const char *format, ...) {
     va_list args;
     va_start(args, format);
 
-    char *msg;
-    vasprintf(&msg, format, args);
+    char *msg = talloc_vasprintf(NULL, format, args);
 
     bot_send_raw(b, msg);
     bot_send_raw(b, "\r\n");
+
+    talloc_free(msg);
 }
