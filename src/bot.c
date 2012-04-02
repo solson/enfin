@@ -2,6 +2,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include <stdbool.h>
+#include <stdarg.h>
 #include <assert.h>
 #include <unistd.h>
 #include <sys/types.h>
@@ -74,19 +75,13 @@ void bot_connect(bot *b) {
 }
 
 void bot_register(bot *b) {
-    char msg[] =
-        "NICK enfin\r\n"
-        "USER enfin 0 * :An IRC bot in C\r\n";
-
-    bot_send_raw(b, msg);
+    bot_sendf(b, "NICK %s", b->nick);
+    bot_sendf(b, "USER %s 0 * :%s", b->username, b->realname);
 }
 
 void bot_postregister(bot *b) {
-    char msg[] =
-        "JOIN #bots\r\n"
-        "PRIVMSG #bots :It works!\r\n";
-
-    bot_send_raw(b, msg);
+    bot_sendf(b, "JOIN #bots");
+    bot_sendf(b, "PRIVMSG #bots :It works!");
 }
 
 void bot_run(bot *b) {
@@ -120,4 +115,15 @@ void bot_send_raw(bot *b, const char *msg) {
         sent += n;
         left -= n;
     }
+}
+
+void bot_sendf(bot *b, const char *format, ...) {
+    va_list args;
+    va_start(args, format);
+
+    char *msg;
+    vasprintf(&msg, format, args);
+
+    bot_send_raw(b, msg);
+    bot_send_raw(b, "\r\n");
 }

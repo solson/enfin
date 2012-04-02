@@ -2,7 +2,7 @@
 
 CC := clang
 OUTPUT := enfin
-CFLAGS := -std=gnu99 -MMD -Iinclude/ -Wall -Wextra
+CFLAGS := -std=gnu99 -D_GNU_SOURCE -MMD -Iinclude/ -Wall -Wextra
 LDFLAGS :=
 
 # Find sources
