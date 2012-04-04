@@ -10,6 +10,7 @@
 #include <netdb.h>
 #include <talloc.h>
 #include "bot.h"
+#include "ircmsg.h"
 
 bot *bot_new(const char *nick, const char *username, const char *realname,
         const char *hostname, const char *port) {
@@ -79,14 +80,6 @@ void bot_postregister(bot *b) {
     bot_sendf(b, "JOIN #bots");
 }
 
-void bot_handle_raw(bot *b, const char *msg) {
-    printf(">> \"%s\"\n", msg);
-
-    if(NULL != strstr(msg, " 001 ")) {
-        bot_postregister(b);
-    }
-}
-
 void bot_run(bot *b) {
     bot_connect(b);
     bot_register(b);
@@ -143,13 +136,13 @@ void bot_run(bot *b) {
     }
 }
 
-void bot_send_raw(bot *b, const char *msg) {
-    int total = strlen(msg);
+void bot_send_raw(bot *b, const char *raw_msg) {
+    int total = strlen(raw_msg);
     int sent = 0;
     int left = total;
 
     while(sent < total) {
-        int n = send(b->sock, msg + sent, left, 0);
+        int n = send(b->sock, raw_msg + sent, left, 0);
         if(n == -1) {
             perror("error sending data");
             exit(EXIT_FAILURE);
@@ -170,4 +163,16 @@ void bot_sendf(bot *b, const char *format, ...) {
     bot_send_raw(b, "\r\n");
 
     talloc_free(msg);
+}
+
+void bot_handle_raw(bot *b, const char *raw_msg) {
+    printf(">> \"%s\"\n", raw_msg);
+
+    ircmsg *m = ircmsg_parse_new(raw_msg);
+
+    if(0 == strcmp(m->command, "001")) {
+        bot_postregister(b);
+    }
+
+    ircmsg_free(m);
 }
