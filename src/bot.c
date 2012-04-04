@@ -48,13 +48,13 @@ void bot_connect(bot *b) {
 
     struct addrinfo *p;
     for(p = res; p != NULL; p = p->ai_next) {
-        b->sock = socket(res->ai_family, res->ai_socktype, res->ai_protocol);
+        b->sock = socket(p->ai_family, p->ai_socktype, p->ai_protocol);
         if(b->sock == -1) {
             perror("error opening socket");
             continue;
         }
 
-        status = connect(b->sock, res->ai_addr, res->ai_addrlen);
+        status = connect(b->sock, p->ai_addr, p->ai_addrlen);
         if(status == -1) {
             perror("error connecting");
             continue;
