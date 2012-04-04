@@ -15,11 +15,11 @@ bot *bot_new(const char *nick, const char *username, const char *realname,
         const char *hostname, const char *port) {
     bot *b = talloc(NULL, bot);
 
-    b->nick = talloc_strdup(b, nick);
+    b->nick     = talloc_strdup(b, nick);
     b->username = talloc_strdup(b, username);
     b->realname = talloc_strdup(b, realname);
     b->hostname = talloc_strdup(b, hostname);
-    b->port = talloc_strdup(b, port);
+    b->port     = talloc_strdup(b, port);
 
     return b;
 }
