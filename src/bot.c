@@ -113,8 +113,11 @@ void bot_run(bot *b) {
         // Look for \r\n line endings and handle the lines if found
         while(i < leftover + bytesread - 1) {
             if(buf[i] == '\r' && buf[i + 1] == '\n') {
-                buf[i] = '\0'; // End the string at the \r
-                bot_handle_raw(b, buf + start);
+                // Don't do anything with empty lines.
+                if(start != i) {
+                    buf[i] = '\0'; // End the string at the \r
+                    bot_handle_raw(b, buf + start);
+                }
 
                 i += 2; // Skip the \r\n
                 start = i; // Next line starts after
