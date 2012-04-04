@@ -77,21 +77,65 @@ void bot_register(bot *b) {
 
 void bot_postregister(bot *b) {
     bot_sendf(b, "JOIN #bots");
-    bot_sendf(b, "PRIVMSG #bots :It works!");
+}
+
+void bot_handle_raw(bot *b, const char *msg) {
+    printf(">> \"%s\"\n", msg);
+
+    if(NULL != strstr(msg, " 001 ")) {
+        bot_postregister(b);
+    }
 }
 
 void bot_run(bot *b) {
     bot_connect(b);
     bot_register(b);
 
-    while(true) {
-        char buf[513];
-        int bytesread = recv(b->sock, buf, 513, 0);
-        buf[bytesread] = '\0';
-        printf("%s", buf);
+    char buf[513]; // extra space for nul when line is 512 bytes
+    int leftover = 0;
 
-        if(NULL != strstr(buf, " 001 ")) {
-            bot_postregister(b);
+    while(true) {
+        int bytesread = recv(b->sock, buf + leftover, sizeof(buf) - leftover - 1, 0);
+
+        if(bytesread == 0) {
+            printf("remote host closed the connection\n");
+            exit(EXIT_SUCCESS);
+        } else if(bytesread == -1) {
+            perror("error recieving data");
+            exit(EXIT_FAILURE);
+        }
+
+        // start looking for \r\n at the end of leftover
+        int i = leftover ? leftover - 1 : 0;
+        // the index of the start of the current line
+        int start = 0;
+
+        // Look for \r\n line endings and handle the lines if found
+        while(i < leftover + bytesread - 1) {
+            if(buf[i] == '\r' && buf[i + 1] == '\n') {
+                buf[i] = '\0'; // End the string at the \r
+                bot_handle_raw(b, buf + start);
+
+                i += 2; // Skip the \r\n
+                start = i; // Next line starts after
+            } else {
+                i++;
+            }
+        }
+
+        leftover = leftover + bytesread - start;
+
+        // If the buffer fills, the line is invalid IRC (messages must be
+        // under 512 bytes)
+        if(leftover >= sizeof(buf) - 1) {
+            buf[sizeof(buf) - 1] = '\0';
+            fprintf(stderr, "error: Line received was longer than the IRC "
+                    "protocol allows. Showing first 512 bytes:\n%s\n", buf);
+            exit(EXIT_FAILURE);
+        }
+
+        if(leftover > 0) {
+            memmove(buf, buf + start, leftover);
         }
     }
 }
