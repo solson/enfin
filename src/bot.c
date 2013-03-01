@@ -85,7 +85,7 @@ void bot_run(bot *b) {
     bot_register(b);
 
     char buf[513]; // extra space for nul when line is 512 bytes
-    int leftover = 0;
+    unsigned leftover = 0;
 
     while(true) {
         int bytesread = recv(b->sock, buf + leftover, sizeof(buf) - leftover - 1, 0);
@@ -99,9 +99,9 @@ void bot_run(bot *b) {
         }
 
         // start looking for \r\n at the end of leftover
-        int i = leftover ? leftover - 1 : 0;
+        unsigned i = leftover ? leftover - 1 : 0;
         // the index of the start of the current line
-        int start = 0;
+        unsigned start = 0;
 
         // Look for \r\n line endings and handle the lines if found
         while(i < leftover + bytesread - 1) {
