@@ -159,6 +159,8 @@ void bot_sendf(bot *b, const char *format, ...) {
     char *msg = talloc_vasprintf(NULL, format, args);
     va_end(args);
 
+    printf("<< %s\n", msg);
+
     bot_send_raw(b, msg);
     bot_send_raw(b, "\r\n");
 
@@ -166,7 +168,7 @@ void bot_sendf(bot *b, const char *format, ...) {
 }
 
 void bot_handle_raw(bot *b, const char *raw_msg) {
-    printf(">> \"%s\"\n", raw_msg);
+    printf(">> %s\n", raw_msg);
 
     ircmsg *m = ircmsg_parse_new(raw_msg);
 
